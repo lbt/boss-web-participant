@@ -1,0 +1,5 @@
+venv-bwp
+.eggs/
+*.egg-info
+__pycache__
+*.sqlite3
