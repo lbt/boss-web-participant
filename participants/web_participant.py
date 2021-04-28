@@ -44,6 +44,8 @@ class ParticipantHandler:
             django.setup()
             from participant.models import Participant
             print("Participant started")
+            self.db_participant = Participant.objects.get(name="thefirstone")
+            print(self.db_participant)
             # NB: Ensure that a re-connecting DB is being used
 
     def handle_wi(self, wid):
@@ -66,6 +68,7 @@ class ParticipantHandler:
 
         # Get the Participant by name
         try:
+            print(self.db_participant)
             self.db_participant = Participant.objects.get(name=wid.fields.bwp)
             self.db_participant.store(wid)
             wid.forget = True
