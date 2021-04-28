@@ -7,29 +7,28 @@ data to continue the process.
 
 Example::
 
-  define 'ask someone' do
-    sequence do
-      web_participant :users => 'release-team',
-                      :question => "Does RC look OK?",
-                      :answer => "rc_ok"
-      _if :test => '${f:rc_ok} == yes' do
-         notify_irc :irc_channel => '${irc.log_channel}', :msg => 'RC looks OK'
-         notify_irc :irc_channel => '${irc.log_channel}', :msg => 'RC is not OK'
-      end
+Ruote.process_definition :name => 'ask_someone', :revision => '0.1' do
+  sequence do
+    web_participant :users => 'release-team',
+                    :question => "Does RC look OK?",
+                    :answer => "rc_ok"
+    _if :test => '${f:rc_ok} == yes' do
+       notify_irc :irc_channel => '${irc.log_channel}', :msg => 'RC looks OK'
+       notify_irc :irc_channel => '${irc.log_channel}', :msg => 'RC is not OK'
     end
   end
+end
 
 """
 
 from RuoteAMQP.participant import Workitem
-from .models import Participant
+import os
 import django
 
 
 class ParticipantHandler:
-    def __init__(self, name):
-        self.db_participant = None
-        pass
+    def __init__(self):
+        print("Created a ParticipantHandler")
 
     def handle_wi_control(self, ctrl):
         "Handle any special control actions"
@@ -38,10 +37,13 @@ class ParticipantHandler:
 
     def handle_lifecycle_control(self, ctrl):
         """ participant control thread """
+        print(f"Lifecycle {ctrl}")
         if ctrl.message == "start":
             # Setup django when we're told to start, not at init time
             os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'bwp.settings')
             django.setup()
+            from participant.models import Participant
+            print("Participant started")
             # NB: Ensure that a re-connecting DB is being used
 
     def handle_wi(self, wid):
@@ -54,15 +56,17 @@ class ParticipantHandler:
         if wid.fields.msg is None:
             wid.fields.msg = []
 
+        print(f"Fields {wid.fields}")
+
         missing = [name for name in ["bwp"]
-                   if not getattr(wid.params, name, None)]
+                   if not (getattr(wid.params, name, None) or getattr(wid.fields, name, None))]
         if missing:
             raise RuntimeError("Missing mandatory parameter(s): %s" %
                                ", ".join(missing))
 
         # Get the Participant by name
         try:
-            self.db_participant = Participant.objects.get(name=wid.bwp.name)
+            self.db_participant = Participant.objects.get(name=wid.fields.bwp)
             self.db_participant.store(wid)
             wid.forget = True
         except Participant.DoesNotExist:
