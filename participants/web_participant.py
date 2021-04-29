@@ -68,7 +68,7 @@ class ParticipantHandler:
 
         # Get the Participant by name
         try:
-            print(self.db_participant)
+            print(f"Getting Participant({wid.fields.bwp})")
             self.db_participant = Participant.objects.get(name=wid.fields.bwp)
             self.db_participant.store(wid)
             wid.forget = True
