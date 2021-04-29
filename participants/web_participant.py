@@ -24,6 +24,10 @@ end
 from RuoteAMQP.participant import Workitem
 import os
 import django
+# Setup django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'bwp.settings')
+django.setup()
+from participant.models import Participant
 
 
 class ParticipantHandler:
@@ -39,10 +43,6 @@ class ParticipantHandler:
         """ participant control thread """
         print(f"Lifecycle {ctrl}")
         if ctrl.message == "start":
-            # Setup django when we're told to start, not at init time
-            os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'bwp.settings')
-            django.setup()
-            from participant.models import Participant
             print("Participant started")
             self.db_participant = Participant.objects.get(name="thefirstone")
             print(self.db_participant)
